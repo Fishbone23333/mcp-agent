@@ -21,6 +21,12 @@ from mcp_agent.workflows.llm.augmented_llm_openai import (
 )
 
 
+class MockableOpenAIAugmentedLLM(OpenAIAugmentedLLM):
+    async def generate_stream(self, message, request_params=None):
+        if False:
+            yield message
+
+
 class TestOpenAIAugmentedLLM:
     """
     Tests for the OpenAIAugmentedLLM class.
@@ -41,7 +47,7 @@ class TestOpenAIAugmentedLLM:
         )
 
         # Create LLM instance
-        llm = OpenAIAugmentedLLM(name="test", context=mock_context)
+        llm = MockableOpenAIAugmentedLLM(name="test", context=mock_context)
 
         # Apply common mocks
         llm.history = MagicMock()
@@ -362,6 +368,32 @@ class TestOpenAIAugmentedLLM:
         # Assertions
         assert len(responses) == 2
         assert responses[1].content == "Response after tool error"
+
+    @pytest.mark.asyncio
+    async def test_execute_tool_call_returns_string_content(self, mock_llm):
+        """
+        Tests that OpenAI tool messages use string content for provider compatibility.
+        """
+        tool_call = ChatCompletionMessageToolCall(
+            id="tool_123",
+            type="function",
+            function={"name": "test_tool", "arguments": json.dumps({"query": "test"})},
+        )
+        mock_llm.call_tool = AsyncMock(
+            return_value=MagicMock(
+                content=[
+                    TextContent(type="text", text="first result"),
+                    TextContent(type="text", text="second result"),
+                ],
+                isError=False,
+            )
+        )
+
+        result = await mock_llm.execute_tool_call(tool_call)
+
+        assert result["role"] == "tool"
+        assert result["tool_call_id"] == "tool_123"
+        assert result["content"] == "first result\nsecond result"
 
     # Test 8: API Error Handling
     @pytest.mark.asyncio
