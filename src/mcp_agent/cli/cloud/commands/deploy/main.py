@@ -473,7 +473,8 @@ def deploy_config(
             print_info(
                 f"Use this app as an MCP server at {server_url}/sse\n\n"
                 "MCP configuration example "
-                f"(replace {DISPLAY_API_KEY_PLACEHOLDER} with your API key):"
+                f"(replace {DISPLAY_API_KEY_PLACEHOLDER} with the API key "
+                "clients should use to access this MCP server):"
             )
 
             mcp_config = create_mcp_config_example(app_name, server_url)
