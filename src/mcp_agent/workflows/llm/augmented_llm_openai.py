@@ -1201,6 +1201,9 @@ def mcp_content_to_openai_tool_result_content(
         else:
             text_parts.append(json.dumps(mcp_content_to_openai_content_part(part)))
 
+    if not text_parts:
+        return "[No content in tool result]"
+
     return "\n".join(text_parts)
 
 
